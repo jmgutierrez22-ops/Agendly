@@ -1,0 +1,395 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agendly - Panel Completo CRUD</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+            margin: 0;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 360px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .table-container {
+            flex: 1;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+        .btn-cancelar {
+            background-color: #6c757d;
+            display: none;
+        }
+
+            .btn-cancelar:hover {
+                background-color: #5a6268;
+            }
+
+        #mensaje {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn-table {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            border: none;
+            color: white;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+            .btn-edit:hover {
+                background-color: #e0a800;
+            }
+
+        .btn-delete {
+            background-color: #dc3545;
+        }
+
+            .btn-delete:hover {
+                background-color: #bd2130;
+            }
+
+        .no-data {
+            text-align: center;
+            color: #777;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-layout">
+        <div class="container">
+            <h2 id="formTitulo">📅 Reservar Espacio</h2>
+            <form id="formReserva">
+                <input type="hidden" id="reserva_id" value="">
+
+                <div class="form-group">
+                    <label>Nombre de Usuario:</label>
+                    <input type="text" id="nombre_usuario" required placeholder="Ej. Jose Miguel">
+                </div>
+
+                <div class="form-group">
+                    <label>Espacio a Reservar:</label>
+                    <select id="espacio_id" required>
+                        <option value="1">Cubículo de Estudio 1</option>
+                        <option value="2">Sala de Juntas A</option>
+                        <option value="3">Laboratorio de Cómputo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha de Reserva:</label>
+                    <input type="date" id="fecha_reserva" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Hora Inicio (Formato 24h):</label>
+                    <input type="text" id="hora_inicio" required placeholder="Ej. 7 o 14:30">
+                </div>
+
+                <div class="form-group">
+                    <label>Hora Fin (Formato 24h):</label>
+                    <input type="text" id="hora_fin" required placeholder="Ej. 9 o 16:00">
+                </div>
+
+                <button type="submit" id="btnSubmit">Confirmar Reserva</button>
+                <button type="button" id="btnCancelarEdicion" class="btn-cancelar">Cancelar Edición</button>
+            </form>
+            <div id="mensaje"></div>
+        </div>
+
+        <div class="table-container">
+            <h2>📋 Panel de Control (CRUD Activo)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Espacio</th>
+                        <th>Fecha</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaReservas"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Guardamos los datos temporalmente para cargarlos en el formulario al editar
+        let reservasLocales = [];
+
+        function obtenerNombreEspacio(id) {
+            const espacios = { 1: 'Cubículo de Estudio 1', 2: 'Sala de Juntas A', 3: 'Laboratorio de Cómputo' };
+            return espacios[id] || `Espacio ${id}`;
+        }
+
+        function formatearFechaVista(fechaStr) {
+            if (!fechaStr) return '';
+            return fechaStr.split('T')[0];
+        }
+
+        function ajustarCajaHora(e) {
+            let valor = e.target.value.trim();
+            if (!valor) return;
+            if (!valor.includes(':')) {
+                let horaNum = parseInt(valor, 10);
+                if (!isNaN(horaNum) && horaNum >= 0 && horaNum <= 23) {
+                    e.target.value = `${String(horaNum).padStart(2, '0')}:00:00`;
+                }
+            } else {
+                let partes = valor.split(':');
+                if (partes.length === 2) {
+                    e.target.value = `${String(parseInt(partes[0], 10) || 0).padStart(2, '0')}:${String(parseInt(partes[1], 10) || 0).padStart(2, '0')}:00`;
+                }
+            }
+        }
+
+        document.getElementById('hora_inicio').addEventListener('blur', ajustarCajaHora);
+        document.getElementById('hora_fin').addEventListener('blur', ajustarCajaHora);
+
+        // LEER (Consulta)
+        async function cargarReservas() {
+            const tbody = document.getElementById('tablaReservas');
+            try {
+                const res = await fetch('/api/reservas');
+                reservasLocales = await res.json();
+
+                tbody.innerHTML = '';
+                if (!reservasLocales || reservasLocales.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="no-data">No hay reservaciones agendadas.</td></tr>`;
+                    return;
+                }
+
+                function formatearA12Horas(rawTime) {
+                    if (!rawTime) return '---';
+                    let tiempo = typeof rawTime === 'object' && rawTime.isoString ? rawTime.isoString.substring(11, 19) : (rawTime.includes('T') ? rawTime.split('T')[1].substring(0, 8) : rawTime);
+                    let partes = tiempo.split(':');
+                    if (partes.length < 2) return tiempo;
+                    let horas = parseInt(partes[0], 10);
+                    let ampm = horas >= 12 ? 'PM' : 'AM';
+                    horas = horas % 12 || 12;
+                    return `${horas}:${partes[1]} ${ampm}`;
+                }
+
+                reservasLocales.forEach(reserva => {
+                    const idReal = reserva.id || reserva.id_reserva; // Ajusta según tu columna clave primaria
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                            <td><strong>${reserva.nombre_usuario}</strong></td>
+                            <td>${obtenerNombreEspacio(reserva.espacio_id)}</td>
+                            <td>${formatearFechaVista(reserva.fecha_reserva)}</td>
+                            <td>${formatearA12Horas(reserva.hora_inicio)}</td>
+                            <td>${formatearA12Horas(reserva.hora_fin)}</td>
+                            <td>
+                                <button class="btn-table btn-edit" onclick="prepararEdicion(${idReal})">Editar</button>
+                                <button class="btn-table btn-delete" onclick="eliminarFila(${idReal})">Eliminar</button>
+                            </td>
+                        `;
+                    tbody.appendChild(fila);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" class="no-data" style="color:red;">❌ Error al conectar con el servidor.</td></tr>`;
+            }
+        }
+
+        // PREPARAR ACTUALIZACIÓN (Cargar datos al formulario)
+        function prepararEdicion(id) {
+            const reserva = reservasLocales.find(r => (r.id || r.id_reserva) === id);
+            if (!reserva) return;
+
+            document.getElementById('reserva_id').value = id;
+            document.getElementById('nombre_usuario').value = reserva.nombre_usuario;
+            document.getElementById('espacio_id').value = reserva.espacio_id;
+            document.getElementById('fecha_reserva').value = formatearFechaVista(reserva.fecha_reserva);
+
+            // Extraer formato HH:mm:ss limpio
+            const hInicio = reserva.hora_inicio?.isoString?.substring(11, 19) || reserva.hora_inicio || '';
+            const hFin = reserva.hora_fin?.isoString?.substring(11, 19) || reserva.hora_fin || '';
+            document.getElementById('hora_inicio').value = hInicio.substring(0, 8);
+            document.getElementById('hora_fin').value = hFin.substring(0, 8);
+
+            // Cambiar textos estéticos
+            document.getElementById('formTitulo').textContent = '📝 Editar Reserva';
+            document.getElementById('btnSubmit').textContent = 'Guardar Cambios';
+            document.getElementById('btnCancelarEdicion').style.display = 'block';
+        }
+
+        // CANCELAR EDICIÓN
+        document.getElementById('btnCancelarEdicion').addEventListener('click', () => {
+            document.getElementById('formReserva').reset();
+            document.getElementById('reserva_id').value = '';
+            document.getElementById('formTitulo').textContent = '📅 Reservar Espacio';
+            document.getElementById('btnSubmit').textContent = 'Confirmar Reserva';
+            document.getElementById('btnCancelarEdicion').style.display = 'none';
+        });
+
+        // BORRAR (Eliminación)
+        async function eliminarFila(id) {
+            if (!confirm('¿Estás seguro de que deseas cancelar esta reservación?')) return;
+
+            try {
+                const res = await fetch(`/api/reservas/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                alert(data.mensaje);
+                cargarReservas();
+            } catch (err) {
+                alert('Error al intentar eliminar.');
+            }
+        }
+
+        // CREAR O ACTUALIZAR (Envío del formulario)
+        document.getElementById('formReserva').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const box = document.getElementById('mensaje');
+            const idEdicion = document.getElementById('reserva_id').value;
+
+            const miData = {
+                nombre_usuario: document.getElementById('nombre_usuario').value,
+                espacio_id: parseInt(document.getElementById('espacio_id').value),
+                fecha_reserva: document.getElementById('fecha_reserva').value,
+                hora_inicio: document.getElementById('hora_inicio').value,
+                hora_fin: document.getElementById('hora_fin').value
+            };
+
+            // Determinamos si es un POST (Crear) o PUT (Actualizar)
+            const url = idEdicion ? `/api/reservas/${idEdicion}` : '/api/reservas';
+            const metodo = idEdicion ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: metodo,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(miData)
+                });
+
+                const data = await res.json();
+                box.style.display = 'block';
+
+                if (res.ok) {
+                    box.style.backgroundColor = '#d4edda';
+                    box.style.color = '#155724';
+                    box.textContent = '✅ ' + data.mensaje;
+
+                    // Resetear formulario y estados
+                    document.getElementById('btnCancelarEdicion').click();
+                    cargarReservas();
+                } else {
+                    box.style.backgroundColor = '#f8d7da';
+                    box.style.color = '#721c24';
+                    box.textContent = '❌ ' + (data.detalle || data.error || 'Error en el proceso');
+                }
+            } catch (err) {
+                box.style.display = 'block';
+                box.style.backgroundColor = '#f8d7da';
+                box.style.color = '#721c24';
+                box.textContent = '❌ Error de red.';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', cargarReservas);
+    </script>
+</body>
+</html>
