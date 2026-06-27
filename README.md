@@ -10,7 +10,7 @@
 ---
 
 ## 1. Descripción del proyecto
-Agendly es una solución web funcional desarrollada de forma individual para la evaluación extraordinaria de la materia. El sistema automatiza y centraliza la asignación de espacios físicos (cubículos, laboratorios y salas), optimizando la logística de horarios y evitando conflictos de disponibilidad en entornos académicos u organizacionales.
+Agendly es una solución web funcional desarrollada de forma individual. El sistema automatiza y centraliza la asignación de espacios físicos (cubículos, laboratorios y salas), optimizando la logística de horarios y evitando conflictos de disponibilidad en entornos académicos u organizacionales.
 
 ## 2. Entidad principal
 La entidad principal del sistema es **Reservas**, la cual interactúa directamente con una base de datos relacional y cuenta con los siguientes atributos: id, nombre_usuario, espacio_id, fecha_reserva, hora_inicio y hora_fin.
