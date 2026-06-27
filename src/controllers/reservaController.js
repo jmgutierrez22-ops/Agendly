@@ -11,7 +11,7 @@ const crearReserva = async (req, res) => {
     try {
         const pool = await poolPromise;
 
-        // [REGLA DE NEGOCIO] Validar si el espacio ya está ocupado en ese rango de fecha y hora
+        // [REGLA DE NEGOCIO] Validar si el espacio ya esta ocupado en ese rango de fecha y hora
         const choqueHorario = await pool.request()
             .input('espacio_id', sql.Int, espacio_id)
             .input('fecha_reserva', sql.Date, fecha_reserva)
@@ -74,7 +74,7 @@ const eliminarReserva = async (req, res) => {
         const pool = await poolPromise;
         await pool.request()
             .input('id', sql.Int, id)
-            .query('DELETE FROM Reservas WHERE id = @id'); // Cambia 'id' por el nombre exacto de tu llave primaria si es diferente (ej: id_reserva)
+            .query('DELETE FROM Reservas WHERE id = @id'); 
 
         res.json({ mensaje: 'Reserva eliminada/cancelada correctamente.' });
     } catch (err) {
@@ -82,7 +82,7 @@ const eliminarReserva = async (req, res) => {
     }
 };
 
-// 4. Modificar una reserva (Actualización)
+// 4. Modificar una reserva 
 const actualizarReserva = async (req, res) => {
     const { id } = req.params;
     const { nombre_usuario, espacio_id, fecha_reserva, hora_inicio, hora_fin } = req.body;
